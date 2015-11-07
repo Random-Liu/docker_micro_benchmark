@@ -48,12 +48,12 @@ func benchmarkVariesPeriod(client *docker.Client) {
 	for _, curPeriod := range periods {
 		logTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			curPeriod, curDeadContainerNum, curAliveContainerNum, true))
-		doListContainerBenchMark(client, defaultPeriod, longTestPeriod, true)
+		doListContainerBenchMark(client, curPeriod, longTestPeriod, true)
 		logTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
-			defaultPeriod, curDeadContainerNum, curAliveContainerNum, false))
-		doListContainerBenchMark(client, defaultPeriod, longTestPeriod, false)
+			curPeriod, curDeadContainerNum, curAliveContainerNum, false))
+		doListContainerBenchMark(client, curPeriod, longTestPeriod, false)
 		logTime(fmt.Sprintf("Inspect Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d]",
-			defaultPeriod, curDeadContainerNum, curAliveContainerNum))
-		doInspectContainerBenchMark(client, defaultPeriod, longTestPeriod)
+			curPeriod, curDeadContainerNum, curAliveContainerNum))
+		doInspectContainerBenchMark(client, curPeriod, longTestPeriod)
 	}
 }

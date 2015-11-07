@@ -2,7 +2,7 @@
 
 MIN_DOCKER_NUMBER=6000
 
-DOCKER_NUMBER=`docker ps | wc -l`
+DOCKER_NUMBER=`docker ps -a | wc -l`
 if [ $DOCKER_NUMBER -lt $MIN_DOCKER_NUMBER ]
 then
   echo "Benchmark with different container number"
