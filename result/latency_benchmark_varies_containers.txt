@@ -1,0 +1,54 @@
+00:22:58	List Benchmark[Period=200ms, No.DeadContainers=100, No.AliveContainers=50, All=true]
+00:23:08	averageLatency:38ms, maxLatency:57ms, minLatency:32ms
+00:23:08	List Benchmark[Period=200ms, No.DeadContainers=100, No.AliveContainers=50, All=false]
+00:23:18	averageLatency:16ms, maxLatency:28ms, minLatency:14ms
+00:23:18	Inspect Benchmark[Period=200ms, No.DeadContainers=100, No.AliveContainers=50]
+00:23:28	averageLatency:1ms, maxLatency:1ms, minLatency:1ms
+00:26:27	List Benchmark[Period=200ms, No.DeadContainers=500, No.AliveContainers=50, All=true]
+00:26:37	averageLatency:129ms, maxLatency:149ms, minLatency:113ms
+00:26:37	List Benchmark[Period=200ms, No.DeadContainers=500, No.AliveContainers=50, All=false]
+00:26:47	averageLatency:34ms, maxLatency:50ms, minLatency:29ms
+00:26:47	Inspect Benchmark[Period=200ms, No.DeadContainers=500, No.AliveContainers=50]
+00:26:57	averageLatency:1ms, maxLatency:1ms, minLatency:0ms
+00:30:38	List Benchmark[Period=200ms, No.DeadContainers=1000, No.AliveContainers=50, All=true]
+00:30:48	averageLatency:249ms, maxLatency:398ms, minLatency:216ms
+00:30:48	List Benchmark[Period=200ms, No.DeadContainers=1000, No.AliveContainers=50, All=false]
+00:30:58	averageLatency:57ms, maxLatency:77ms, minLatency:50ms
+00:30:58	Inspect Benchmark[Period=200ms, No.DeadContainers=1000, No.AliveContainers=50]
+00:31:08	averageLatency:1ms, maxLatency:1ms, minLatency:0ms
+00:38:30	List Benchmark[Period=200ms, No.DeadContainers=2000, No.AliveContainers=50, All=true]
+00:38:40	averageLatency:467ms, maxLatency:595ms, minLatency:448ms
+00:38:40	List Benchmark[Period=200ms, No.DeadContainers=2000, No.AliveContainers=50, All=false]
+00:38:50	averageLatency:100ms, maxLatency:131ms, minLatency:88ms
+00:38:50	Inspect Benchmark[Period=200ms, No.DeadContainers=2000, No.AliveContainers=50]
+00:39:00	averageLatency:1ms, maxLatency:1ms, minLatency:1ms
+01:00:58	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=50, All=true]
+01:01:08	averageLatency:1163ms, maxLatency:1390ms, minLatency:1095ms
+01:01:08	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=50, All=false]
+01:01:18	averageLatency:245ms, maxLatency:293ms, minLatency:226ms
+01:01:18	Inspect Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=50]
+01:01:29	averageLatency:1ms, maxLatency:2ms, minLatency:1ms
+01:01:29	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=50, All=true]
+01:01:39	averageLatency:1111ms, maxLatency:1184ms, minLatency:1038ms
+01:01:39	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=50, All=false]
+01:01:49	averageLatency:243ms, maxLatency:300ms, minLatency:229ms
+01:01:49	Inspect Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=50]
+01:01:59	averageLatency:1ms, maxLatency:1ms, minLatency:1ms
+01:02:12	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=100, All=true]
+01:02:22	averageLatency:1151ms, maxLatency:1230ms, minLatency:1113ms
+01:02:22	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=100, All=false]
+01:02:33	averageLatency:257ms, maxLatency:318ms, minLatency:234ms
+01:02:33	Inspect Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=100]
+01:02:43	averageLatency:1ms, maxLatency:1ms, minLatency:0ms
+01:05:37	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=500, All=true]
+01:05:49	averageLatency:1247ms, maxLatency:1321ms, minLatency:1141ms
+01:05:49	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=500, All=false]
+01:05:59	averageLatency:342ms, maxLatency:438ms, minLatency:315ms
+01:05:59	Inspect Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=500]
+01:06:09	averageLatency:1ms, maxLatency:5ms, minLatency:1ms
+01:12:58	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=1000, All=true]
+01:13:09	averageLatency:1369ms, maxLatency:1462ms, minLatency:1227ms
+01:13:09	List Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=1000, All=false]
+01:13:20	averageLatency:461ms, maxLatency:600ms, minLatency:418ms
+01:13:20	Inspect Benchmark[Period=200ms, No.DeadContainers=5000, No.AliveContainers=1000]
+01:13:30	averageLatency:1ms, maxLatency:1ms, minLatency:1ms
