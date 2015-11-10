@@ -115,8 +115,8 @@ func doParalInspectContainerBenchMark(client *docker.Client, curPeriod, testPeri
 	}
 	wg.Wait()
 	allLatencies := []int{}
-	for latencies := range latenciesTable {
-		allLatencies = append(allLatencies, latencies)
+	for _, latencies := range latenciesTable {
+		allLatencies = append(allLatencies, latencies...)
 	}
 	return allLatencies
 }
@@ -130,4 +130,12 @@ func getContainerIds(client *docker.Client) (containerIds []string) {
 		containerIds = append(containerIds, container.ID)
 	}
 	return containerIds
+}
+
+func getContainerNum(client *docker.Client, all bool) int {
+	containers, err := client.ListContainers(docker.ListContainersOptions{All: all})
+	if err != nil {
+		panic(fmt.Sprintf("Error list containers: %v", err))
+	}
+	return len(containers)
 }

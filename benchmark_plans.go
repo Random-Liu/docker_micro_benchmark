@@ -47,8 +47,8 @@ func benchmarkVariesContainerNumber(client *docker.Client) {
 }
 
 func benchmarkVariesPeriod(client *docker.Client) {
-	curDeadContainerNum := deadContainers[len(deadContainers)-1]
-	curAliveContainerNum := aliveContainers[len(aliveContainers)-1]
+	curAliveContainerNum := getContainerNum(client, false)
+	curDeadContainerNum := getContainerNum(client, true) - curAliveContainerNum
 	containerIds := getContainerIds(client)
 	for _, curPeriod := range listPeriods {
 		logTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
@@ -67,10 +67,9 @@ func benchmarkVariesPeriod(client *docker.Client) {
 }
 
 func benchmarkVariesRoutineNumber(client *docker.Client) {
-	curDeadContainerNum := deadContainers[len(deadContainers)-1]
-	curAliveContainerNum := aliveContainers[len(aliveContainers)-1]
+	curAliveContainerNum := getContainerNum(client, false)
+	curDeadContainerNum := getContainerNum(client, true) - curAliveContainerNum
 	containerIds := getContainerIds(client)
-	fmt.Println(containerIds)
 	for _, curRoutineNumber := range routines {
 		logTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, No.Routines=%d, All=%v]",
 			resyncPeriod, curDeadContainerNum, curAliveContainerNum, curRoutineNumber, true))
