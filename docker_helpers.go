@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -19,7 +20,7 @@ func createDeadContainers(client *docker.Client, num int) {
 		}
 		container, err := client.CreateContainer(dockerOpts)
 		if err != nil {
-			panic("Error create containers")
+			panic(fmt.Sprintf("Error create containers: %v", err))
 		}
 		client.StartContainer(container.ID, &docker.HostConfig{})
 	}
@@ -41,13 +42,13 @@ func createAliveContainers(client *docker.Client, num int) {
 		}
 		container, err := client.CreateContainer(dockerOpts)
 		if err != nil {
-			panic("Error create containers")
+			panic(fmt.Sprintf("Error create containers: %v", err))
 		}
 		client.StartContainer(container.ID, &docker.HostConfig{})
 	}
 }
 
-func doListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, all bool) {
+func doListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, all bool) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	for {
@@ -62,20 +63,15 @@ func doListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.
 			time.Sleep(curPeriod)
 		}
 	}
-	logLatency(latencies)
+	return latencies
 }
 
-func doInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration) {
-	containers, _ := client.ListContainers(docker.ListContainersOptions{All: true})
-	containersId := []string{}
-	for _, container := range containers {
-		containersId = append(containersId, container.ID)
-	}
+func doInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, containerIds []string) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	rand.Seed(time.Now().Unix())
 	for {
-		containerId := containersId[rand.Int()%len(containersId)]
+		containerId := containerIds[rand.Int()%len(containerIds)]
 		start := time.Now()
 		client.InspectContainer(containerId)
 		end := time.Now()
@@ -87,73 +83,51 @@ func doInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod ti
 			time.Sleep(curPeriod)
 		}
 	}
-	logLatency(latencies)
+	return latencies
 }
 
-/*
-func doListContainers(client *docker.Client, all bool, sync bool) {
-	for _, curPeriod := range periods {
-		logTime(fmt.Sprintf("Test starts with period=%v", curPeriod))
-		var testTimes int
-		maxLatency := 0
-		minLatency := math.MaxInt64
-		totalLatency := 0
-		startTime := time.Now()
-		for {
-			testTimes++
-			start := time.Now()
-			client.ListContainers(docker.ListContainersOptions{All: all})
-			end := time.Now()
-			curLatency := int(end.Sub(start).Nanoseconds())
-			if maxLatency < curLatency {
-				maxLatency = curLatency
-			}
-			if minLatency > curLatency {
-				minLatency = curLatency
-			}
-			totalLatency += curLatency
-			if time.Now().Sub(startTime) >= testPeriod {
-				break
-			}
-			if curPeriod != 0 {
-				time.Sleep(curPeriod)
-			}
-		}
-		logLatency(totalLatency/testTimes, maxLatency, minLatency)
+// Use true because that's the behaviour of the pod worker
+func doParalListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, routineNumber int, all bool) []int {
+	wg.Add(routineNumber)
+	latenciesTable := make([][]int, routineNumber)
+	for i := 0; i < routineNumber; i++ {
+		go func(index int) {
+			latenciesTable[index] = doListContainerBenchMark(client, curPeriod, testPeriod, all)
+			wg.Done()
+		}(i)
 	}
-	if sync {
-		wg.Done()
+	wg.Wait()
+	allLatencies := []int{}
+	for _, latencies := range latenciesTable {
+		allLatencies = append(allLatencies, latencies...)
 	}
+	return allLatencies
 }
 
-func benchmarkListContainers(client *docker.Client, routineNumber int, all bool) {
-	var adj string
-	if all {
-		adj = "All"
-	} else {
-		adj = "Alive"
+func doParalInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, routineNumber int, containerIds []string) []int {
+	wg.Add(routineNumber)
+	latenciesTable := make([][]int, routineNumber)
+	for i := 0; i < routineNumber; i++ {
+		go func(index int) {
+			latenciesTable[index] = doInspectContainerBenchMark(client, curPeriod, testPeriod, containerIds)
+			wg.Done()
+		}(i)
 	}
-	logTime(fmt.Sprintf("Test List %s Containers with routineNumber %d", adj, routineNumber))
-	if routineNumber == 0 {
-		doListContainers(client, all, false)
-	} else {
-		wg.Add(routineNumber)
-		for i := 0; i < routineNumber; i++ {
-			go doListContainers(client, all, true)
-		}
-		wg.Wait()
+	wg.Wait()
+	allLatencies := []int{}
+	for latencies := range latenciesTable {
+		allLatencies = append(allLatencies, latencies)
 	}
+	return allLatencies
 }
 
-func listBenchmarkPlan(client *docker.Client) {
-	// Test listContainers (Like PLEG)
-	benchmarkListContainers(client, 0, true)
-	benchmarkListContainers(client, 0, false)
-
-	// Test listContainers in each mutilple routines (Like PodWorkers)
-	for _, routineNumber := range routines {
-		// PodWorkers only use list containers true
-		benchmarkListContainers(client, routineNumber, true)
+func getContainerIds(client *docker.Client) (containerIds []string) {
+	containers, err := client.ListContainers(docker.ListContainersOptions{All: true})
+	if err != nil {
+		panic(fmt.Sprintf("Error list containers: %v", err))
 	}
+	for _, container := range containers {
+		containerIds = append(containerIds, container.ID)
+	}
+	return containerIds
 }
-*/

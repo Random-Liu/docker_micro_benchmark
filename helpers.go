@@ -32,6 +32,6 @@ func logLatency(latencies []int) {
 		totalLatency += latency
 	}
 	averageLatency := totalLatency / len(latencies)
-	logTime(fmt.Sprintf("averageLatency:%dms, maxLatency:%dms, minLatency:%dms",
-		averageLatency/1000000, maxLatency/1000000, minLatency/1000000))
+	logTime(fmt.Sprintf("averageLatency:%fms, maxLatency:%fms, minLatency:%fms",
+		float64(averageLatency)/1000000, float64(maxLatency)/1000000, float64(minLatency)/1000000))
 }
