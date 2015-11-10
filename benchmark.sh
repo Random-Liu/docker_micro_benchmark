@@ -1,19 +1,32 @@
 #!/bin/bash
+RESULT=result
 
-MIN_DOCKER_NUMBER=6000
-
-DOCKER_NUMBER=`docker ps -a | wc -l`
-if [ $DOCKER_NUMBER -lt $MIN_DOCKER_NUMBER ]
+if [ ! -d $RESULT ]
 then
-  echo "Benchmark with different container number"
-  LC_ALL=C sar -rubwS -P ALL 1 > sar_benchmark_varies_containers.txt &
-  SAR_PID=$!
-  ./docker_micro_benchmark -c > latency_benchmark_varies_containers.txt
-  kill $SAR_PID
+	mkdir $RESULT
 fi
 
-echo "Benchmark with different period"
-LC_ALL=C sar -rubwS -P ALL 1 > sar_benchmark_varies_period.txt &
+DOCKER_NUMBER=`docker ps -a | wc -l`
+DOCKER_NUMBER=`expr $DOCKER_NUMBER - 1`
+if [ $DOCKER_NUMBER -eq 0 ]
+then
+	echo "Benchmark with different container numbers"
+	LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/sar_benchmark_varies_containers.txt &
+	SAR_PID=$!
+	./docker_micro_benchmark -c > $RESULT/latency_benchmark_varies_containers.txt
+	kill $SAR_PID
+else
+	echo "Exsiting Docker number: $DOCKER_NUMBER, skip benchmark with different container numbers"
+fi
+
+echo "Benchmark with different periods"
+LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/sar_benchmark_varies_period.txt &
 SAR_PID=$!
-./docker_micro_benchmark -p > latency_benchmark_varies_period.txt
+./docker_micro_benchmark -p > $RESULT/latency_benchmark_varies_period.txt
+kill $SAR_PID
+
+echo "Benchmark with different routine numbers"
+LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/sar_benchmark_varies_routines.txt &
+SAR_PID=$!
+./docker_micro_benchmark -r > $RESULT/latency_benchmark_varies_routines.txt
 kill $SAR_PID
