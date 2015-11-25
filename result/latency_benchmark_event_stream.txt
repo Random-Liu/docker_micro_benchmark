@@ -1,0 +1,40 @@
+02:52:40	Event Stream Benchmark[Frequency=1, No.Routines=1]
+02:52:40	Start Generating Event[Frequency=1]
+02:52:51	Stop Generating Event[Expected Frequency=1, Real Frequency=1.1]
+02:52:51	averageLatency:0.000000ms, maxLatency:0.000000ms, minLatency:0.000000ms
+02:52:51	Event Stream Benchmark[Event Number=22]
+02:52:51	Event Stream Benchmark[Frequency=2, No.Routines=1]
+02:52:51	Start Generating Event[Frequency=2]
+02:53:01	Stop Generating Event[Expected Frequency=2, Real Frequency=1.9]
+02:53:01	averageLatency:0.000000ms, maxLatency:0.000000ms, minLatency:0.000000ms
+02:53:01	Event Stream Benchmark[Event Number=38]
+02:53:01	Event Stream Benchmark[Frequency=5, No.Routines=2]
+02:53:01	Start Generating Event[Frequency=5]
+02:53:11	Stop Generating Event[Expected Frequency=5, Real Frequency=4.4]
+02:53:11	averageLatency:0.000000ms, maxLatency:0.000000ms, minLatency:0.000000ms
+02:53:11	Event Stream Benchmark[Event Number=88]
+02:53:11	Event Stream Benchmark[Frequency=10, No.Routines=3]
+02:53:11	Start Generating Event[Frequency=10]
+02:53:22	Stop Generating Event[Expected Frequency=10, Real Frequency=7.9]
+02:53:22	averageLatency:0.000000ms, maxLatency:0.000000ms, minLatency:0.000000ms
+02:53:22	Event Stream Benchmark[Event Number=158]
+02:53:22	Event Stream Benchmark[Frequency=20, No.Routines=4]
+02:53:22	Start Generating Event[Frequency=20]
+02:53:32	Stop Generating Event[Expected Frequency=20, Real Frequency=12.7]
+02:53:32	averageLatency:0.000000ms, maxLatency:0.000001ms, minLatency:0.000000ms
+02:53:32	Event Stream Benchmark[Event Number=254]
+02:53:32	Event Stream Benchmark[Frequency=50, No.Routines=10]
+02:53:32	Start Generating Event[Frequency=50]
+02:53:42	Stop Generating Event[Expected Frequency=50, Real Frequency=21.8]
+02:53:42	averageLatency:0.000000ms, maxLatency:0.000001ms, minLatency:0.000000ms
+02:53:42	Event Stream Benchmark[Event Number=436]
+02:53:42	Event Stream Benchmark[Frequency=100, No.Routines=50]
+02:53:42	Start Generating Event[Frequency=100]
+02:53:53	Stop Generating Event[Expected Frequency=100, Real Frequency=23.1]
+02:53:53	averageLatency:0.000000ms, maxLatency:0.000001ms, minLatency:0.000000ms
+02:53:53	Event Stream Benchmark[Event Number=462]
+02:53:53	Event Stream Benchmark[Frequency=200, No.Routines=100]
+02:53:53	Start Generating Event[Frequency=200]
+02:54:06	Stop Generating Event[Expected Frequency=200, Real Frequency=26.1]
+02:54:06	averageLatency:0.000000ms, maxLatency:0.000001ms, minLatency:0.000000ms
+02:54:06	Event Stream Benchmark[Event Number=522]
