@@ -30,3 +30,12 @@ LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/sar_benchmark_varies_routines.txt &
 SAR_PID=$!
 ./docker_micro_benchmark -r > $RESULT/latency_benchmark_varies_routines.txt
 kill $SAR_PID
+
+echo "Benchmark event stream"
+LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/sar_benchmark_event_stream.txt &
+SAR_PID=$!
+shell/pidstat-grapher.py -a docker,docker_micro_benchmark -d $RESULT > /dev/null &
+PIDSTAT_PID=$!
+./docker_micro_benchmark -e > $RESULT/latency_benchmark_event_stream.txt 
+kill $SAR_PID
+kill $PIDSTAT_PID

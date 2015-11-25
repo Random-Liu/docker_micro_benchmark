@@ -68,3 +68,28 @@ var (
 		100,
 	}
 )
+
+// For docker event stream benchmark
+var (
+	// This is just the plan, we'll calculate the real frequency
+	eventFrequency = []int{
+		1, // events/second
+		2,
+		5,
+		10,
+		20,
+		50,
+		100,
+		200,
+	}
+	eventRoutines = []int{
+		1,
+		1,
+		2,
+		3,
+		4,
+		10,
+		50,
+		100,
+	}
+)

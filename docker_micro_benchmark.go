@@ -4,11 +4,12 @@ import (
 	"fmt"
 	docker "github.com/fsouza/go-dockerclient"
 	"os"
+	//"os/exec"
 )
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Usage: %s -[c|p|r]\n", os.Args[0])
+		fmt.Printf("Usage: %s -[c|p|r|e]\n", os.Args[0])
 		return
 	}
 	client, _ := docker.NewClient(endpoint)
@@ -19,6 +20,8 @@ func main() {
 		benchmarkVariesPeriod(client)
 	case "-r":
 		benchmarkVariesRoutineNumber(client)
+	case "-e":
+		benchmarkEventStream(client)
 	default:
 	}
 }
