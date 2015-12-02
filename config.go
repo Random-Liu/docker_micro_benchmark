@@ -12,7 +12,7 @@ var (
 // Period configuration
 var (
 	defaultPeriod   = 200 * time.Millisecond
-	shortTestPeriod = 10 * time.Second
+	shortTestPeriod = 2 * time.Second
 	longTestPeriod  = 50 * time.Second
 )
 
@@ -91,5 +91,19 @@ var (
 		10,
 		50,
 		100,
+	}
+)
+
+// For docker event loss rate
+var (
+	defaultEventFrequency = 100
+	defaultEventRoutines  = 100 //50
+	timesForEachPeriod    = 3
+	testPeriodList        = []time.Duration{
+		10 * time.Second,
+		20 * time.Second,
+		30 * time.Second,
+		1 * time.Minute,
+		2 * time.Minute,
 	}
 )

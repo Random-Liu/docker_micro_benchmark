@@ -9,7 +9,7 @@ import (
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Usage: %s -[c|p|r|e]\n", os.Args[0])
+		fmt.Printf("Usage: %s -[c|p|r|e|l]\n", os.Args[0])
 		return
 	}
 	client, _ := docker.NewClient(endpoint)
@@ -22,6 +22,8 @@ func main() {
 		benchmarkVariesRoutineNumber(client)
 	case "-e":
 		benchmarkEventStream(client)
+	case "-l":
+		benchmarkEventLossRate(client)
 	default:
 	}
 }

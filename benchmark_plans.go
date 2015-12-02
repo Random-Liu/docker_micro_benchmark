@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
+	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/random-liu/docker_micro_benchmark/helpers"
@@ -112,9 +113,41 @@ func benchmarkEventStream(client *docker.Client) {
 			cmd.Run()
 			fmt.Print(string(out))
 		}
+		// Just make sure that all the events are received
+		time.Sleep(time.Second)
 		stopchan <- 1
 		wg.Wait()
 		helpers.LogLatency(latencies)
-		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v]", len(latencies)))
+		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v, Event Received=%v]", len(latencies)))
+	}
+}
+
+func benchmarkEventLossRate(client *docker.Client) {
+	for _, testPeriod := range testPeriodList {
+		for t := 1; t <= timesForEachPeriod; t++ {
+			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Frequency=%v, No.Routines=%d, Period=%v, Times=%v]",
+				defaultEventFrequency, defaultEventRoutines, testPeriod, t))
+			var latencies []int
+			stopchan := make(chan int, 1)
+			defer close(stopchan)
+			wg.Add(1)
+			go func() {
+				latencies = helpers.DoEventStreamBenchMark(stopchan, client)
+				wg.Done()
+			}()
+			cmd := exec.Command("event_generator/event_generator", strconv.Itoa(defaultEventFrequency), strconv.Itoa(defaultEventRoutines),
+				strconv.FormatInt(testPeriod.Nanoseconds(), 10), endpoint)
+			if out, err := cmd.Output(); err != nil {
+				panic(fmt.Sprintf("Error get output: %v", err))
+			} else {
+				cmd.Run()
+				fmt.Print(string(out))
+			}
+			// Just make sure that all the events are received
+			time.Sleep(time.Second)
+			stopchan <- 1
+			wg.Wait()
+			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Received=%v]", len(latencies)))
+		}
 	}
 }

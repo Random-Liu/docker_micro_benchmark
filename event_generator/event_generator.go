@@ -40,7 +40,7 @@ func StartEventGenerator(client *docker.Client, frequency int64, routineNumber i
 	for _, time := range times {
 		totalTimes += time
 	}
-	helpers.LogTime(fmt.Sprintf("Stop Generating Event[Expected Frequency=%v, Real Frequency=%v]", frequency, float64(totalTimes)/testPeriod.Seconds()))
+	helpers.LogTime(fmt.Sprintf("Stop Generating Event[Expected Frequency=%v, Real Frequency=%v, Total Event Number=%v]", frequency, float64(totalTimes)/testPeriod.Seconds(), totalTimes*2))
 }
 
 func main() {
