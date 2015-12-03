@@ -4,44 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/random-liu/docker_micro_benchmark/helpers"
+	"github.com/random-liu/docker_micro_benchmark/event"
 )
-
-var (
-	wg = &sync.WaitGroup{}
-)
-
-func StartEventGenerator(client *docker.Client, frequency int64, routineNumber int, testPeriod time.Duration) {
-	period := time.Duration(time.Second.Nanoseconds() / frequency * int64(routineNumber))
-	times := make([]int, routineNumber)
-	startTime := time.Now()
-	wg.Add(routineNumber)
-	helpers.LogTime(fmt.Sprintf("Start Generating Event[Frequency=%v]", frequency))
-	for id := 0; id < routineNumber; id++ {
-		go func(id int) {
-			client, _ = docker.NewClient("unix:///var/run/docker.sock")
-			for {
-				helpers.CreateAndRemoveContainers(client)
-				times[id]++
-				if time.Now().Sub(startTime) >= testPeriod {
-					break
-				}
-				time.Sleep(period)
-			}
-			wg.Done()
-		}(id)
-	}
-	wg.Wait()
-	totalTimes := 0
-	for _, time := range times {
-		totalTimes += time
-	}
-	helpers.LogTime(fmt.Sprintf("Stop Generating Event[Expected Frequency=%v, Real Frequency=%v, Total Event Number=%v]", frequency, float64(totalTimes)/testPeriod.Seconds(), totalTimes*2))
-}
 
 func main() {
 	if len(os.Args) != 5 {
@@ -68,5 +35,5 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error create docker client: %v", err))
 	}
-	StartEventGenerator(client, frequency, routineNumber, time.Duration(testPeriod))
+	event.StartGeneratingEvent(client, frequency, routineNumber, time.Duration(testPeriod))
 }

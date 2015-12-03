@@ -8,6 +8,7 @@ import (
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/random-liu/docker_micro_benchmark/event"
 	"github.com/random-liu/docker_micro_benchmark/helpers"
 )
 
@@ -102,7 +103,7 @@ func benchmarkEventStream(client *docker.Client) {
 		defer close(stopchan)
 		wg.Add(1)
 		go func() {
-			latencies = helpers.DoEventStreamBenchMark(stopchan, client)
+			latencies, _ = helpers.DoEventStreamBenchMark(stopchan, client)
 			wg.Done()
 		}()
 		cmd := exec.Command("event_generator/event_generator", strconv.Itoa(frequency), strconv.Itoa(routineNumber),
@@ -127,27 +128,55 @@ func benchmarkEventLossRate(client *docker.Client) {
 		for t := 1; t <= timesForEachPeriod; t++ {
 			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Frequency=%v, No.Routines=%d, Period=%v, Times=%v]",
 				defaultEventFrequency, defaultEventRoutines, testPeriod, t))
-			var latencies []int
+			var events []*docker.APIEvents
 			stopchan := make(chan int, 1)
 			defer close(stopchan)
 			wg.Add(1)
 			go func() {
-				latencies = helpers.DoEventStreamBenchMark(stopchan, client)
+				_, events = helpers.DoEventStreamBenchMark(stopchan, client)
 				wg.Done()
 			}()
-			cmd := exec.Command("event_generator/event_generator", strconv.Itoa(defaultEventFrequency), strconv.Itoa(defaultEventRoutines),
-				strconv.FormatInt(testPeriod.Nanoseconds(), 10), endpoint)
-			if out, err := cmd.Output(); err != nil {
-				panic(fmt.Sprintf("Error get output: %v", err))
-			} else {
-				cmd.Run()
-				fmt.Print(string(out))
-			}
+			dockerIDs := event.StartGeneratingEvent(client, int64(defaultEventFrequency), defaultEventRoutines, testPeriod)
 			// Just make sure that all the events are received
 			time.Sleep(time.Second)
 			stopchan <- 1
 			wg.Wait()
-			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Received=%v]", len(latencies)))
+
+			mismatchEventNum := 0
+			dockerIDMap := map[string]bool{}
+			for _, event := range events {
+				if created, found := dockerIDMap[event.ID]; !found {
+					if event.Status == "create" {
+						dockerIDMap[event.ID] = true
+					} else {
+						mismatchEventNum++
+					}
+				} else {
+					if created && event.Status == "destroy" {
+						dockerIDMap[event.ID] = false
+					} else {
+						mismatchEventNum++
+					}
+				}
+			}
+
+			badOrderEventNum := 0
+			var lastEvent *docker.APIEvents
+			for _, event := range events {
+				if lastEvent != nil && event.Time < lastEvent.Time {
+					badOrderEventNum++
+				}
+				lastEvent = event
+			}
+
+			errDockerIDNum := 0
+			for _, dockerID := range dockerIDs {
+				if _, found := dockerIDMap[dockerID]; !found {
+					errDockerIDNum++
+				}
+			}
+			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Created=%v, Event Received=%v, No.MisMatched Events=%v, No.Bad Order Events=%v, No.Error Docker IDs=%v]",
+				len(dockerIDs)*2, len(events), mismatchEventNum, badOrderEventNum, errDockerIDNum))
 		}
 	}
 }

@@ -18,7 +18,7 @@ func newContainerName() string {
 	return "benchmark_container_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 }
 
-func CreateAndRemoveContainers(client *docker.Client) {
+func CreateAndRemoveContainers(client *docker.Client) string {
 	name := newContainerName()
 	dockerOpts := docker.CreateContainerOptions{
 		Name: name,
@@ -36,6 +36,7 @@ func CreateAndRemoveContainers(client *docker.Client) {
 	if err := client.RemoveContainer(removeOpts); err != nil {
 		panic(fmt.Sprintf("Error remove containers: %v", err))
 	}
+	return container.ID
 }
 
 func CreateDeadContainers(client *docker.Client, num int) {
@@ -150,8 +151,9 @@ func DoParalInspectContainerBenchMark(client *docker.Client, curPeriod, testPeri
 	return allLatencies
 }
 
-func DoEventStreamBenchMark(stopchan chan int, client *docker.Client) []int {
+func DoEventStreamBenchMark(stopchan chan int, client *docker.Client) ([]int, []*docker.APIEvents) {
 	eventchan := make(chan *docker.APIEvents, 1000)
+	events := []*docker.APIEvents{}
 	defer close(eventchan)
 	if err := client.AddEventListener(eventchan); err != nil {
 		panic(fmt.Sprintf("Error add event listener: %v", err))
@@ -162,9 +164,10 @@ func DoEventStreamBenchMark(stopchan chan int, client *docker.Client) []int {
 		case event := <-eventchan:
 			latency := time.Now().Unix() - event.Time
 			latencies = append(latencies, int(latency))
+			events = append(events, event)
 		case <-stopchan:
 			client.RemoveEventListener(eventchan)
-			return latencies
+			return latencies, events
 		}
 	}
 }
