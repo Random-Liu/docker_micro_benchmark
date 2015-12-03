@@ -97,7 +97,7 @@ var (
 // For docker event loss rate
 var (
 	defaultEventFrequency = 100
-	defaultEventRoutines  = 100 //50
+	defaultEventRoutines  = 50 //100
 	timesForEachPeriod    = 3
 	testPeriodList        = []time.Duration{
 		10 * time.Second,
@@ -105,5 +105,7 @@ var (
 		30 * time.Second,
 		1 * time.Minute,
 		2 * time.Minute,
+		5 * time.Minute,
+		10 * time.Minute,
 	}
 )
