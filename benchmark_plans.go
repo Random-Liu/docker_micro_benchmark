@@ -189,8 +189,8 @@ func benchmarkEventLossRate(client *docker.Client) {
 				errorEventNum += len(eventsPerDocker)
 				errorDockerNum++
 			}
-			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Created=%v, Event Received=%v, No.Error Events=%v, No.Bad Order Events=%v, No.Error Docker=%v, No.Extra Event Docker=%v, No.Missing Event Docker=%v, No.Right Order Wrong Time Event Docker=%v, No.Wrong Order Right Time Event Docker=%v, No.Wrong Order Wrong Time Event Docker=%v]",
-				len(dockerIDs)*2, len(events), errorEventNum, badOrderEventNum, errorDockerNum, extraEventDocker, missingEventDocker, orderRightTimeWrongEventDocker, orderWrongTimeRightEventDocker, orderWrongTimeWrongEventDocker))
+			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Created=%v, Event Received=%v, No.Error Events=%v, No.Error Docker=%v, No.Bad Order Events=%v, No.Extra Event Docker=%v, No.Missing Event Docker=%v, No.Right Order Wrong Time Event Docker=%v, No.Wrong Order Right Time Event Docker=%v, No.Wrong Order Wrong Time Event Docker=%v]",
+				len(dockerIDs)*2, len(events), errorEventNum, errorDockerNum, badOrderEventNum, extraEventDocker, missingEventDocker, orderRightTimeWrongEventDocker, orderWrongTimeRightEventDocker, orderWrongTimeWrongEventDocker))
 		}
 	}
 }
