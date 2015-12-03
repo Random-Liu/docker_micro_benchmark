@@ -15,7 +15,7 @@ var (
 )
 
 func newContainerName() string {
-	return "benchmark_container_" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	return "benchmark_container_" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Int())
 }
 
 func CreateAndRemoveContainers(client *docker.Client) string {
