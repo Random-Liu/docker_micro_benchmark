@@ -142,26 +142,6 @@ func benchmarkEventLossRate(client *docker.Client) {
 			stopchan <- 1
 			wg.Wait()
 
-			mismatchEventNum := 0
-			dockerIDMap := map[string]bool{}
-			for _, event := range events {
-				if created, found := dockerIDMap[event.ID]; !found {
-					if event.Status == "create" {
-						dockerIDMap[event.ID] = true
-					} else {
-						helpers.LogTime(fmt.Sprintf("Detail Info[Mismatched Event: %+v", event))
-						mismatchEventNum++
-					}
-				} else {
-					if created && event.Status == "destroy" {
-						dockerIDMap[event.ID] = false
-					} else {
-						helpers.LogTime(fmt.Sprintf("Detail Info[Mismatched Event: %+v", event))
-						mismatchEventNum++
-					}
-				}
-			}
-
 			badOrderEventNum := 0
 			var lastEvent *docker.APIEvents
 			for _, event := range events {
@@ -171,14 +151,46 @@ func benchmarkEventLossRate(client *docker.Client) {
 				lastEvent = event
 			}
 
-			errDockerIDNum := 0
-			for _, dockerID := range dockerIDs {
-				if _, found := dockerIDMap[dockerID]; !found {
-					errDockerIDNum++
-				}
+			dockerIDMap := map[string][]*docker.APIEvents{}
+			for _, event := range events {
+				dockerIDMap[event.ID] = append(dockerIDMap[event.ID], event)
 			}
-			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Created=%v, Event Received=%v, No.MisMatched Events=%v, No.Bad Order Events=%v, No.Error Docker IDs=%v]",
-				len(dockerIDs)*2, len(events), mismatchEventNum, badOrderEventNum, errDockerIDNum))
+
+			errorEventNum := 0
+			errorDockerNum := 0     // Total Error Docker Num
+			extraEventDocker := 0   // Docker with duplicated events
+			missingEventDocker := 0 // Docker with missed events
+			orderWrongTimeRightEventDocker := 0
+			orderRightTimeWrongEventDocker := 0
+			orderWrongTimeWrongEventDocker := 0
+			rightEventDocker := 0 // Docker with right events
+			for _, dockerID := range dockerIDs {
+				eventsPerDocker := dockerIDMap[dockerID]
+				if len(eventsPerDocker) < 2 {
+					missingEventDocker++
+				} else if len(eventsPerDocker) > 2 {
+					extraEventDocker++
+				} else {
+					if eventsPerDocker[0].Status == "create" && eventsPerDocker[1].Status == "destroy" {
+						if eventsPerDocker[0].Time <= eventsPerDocker[1].Time {
+							rightEventDocker++
+							continue
+						} else {
+							orderRightTimeWrongEventDocker++
+						}
+					} else if eventsPerDocker[0].Status == "destroy" && eventsPerDocker[1].Status == "create" {
+						if eventsPerDocker[0].Time >= eventsPerDocker[1].Time {
+							orderWrongTimeRightEventDocker++
+						} else {
+							orderWrongTimeWrongEventDocker++
+						}
+					}
+				}
+				errorEventNum += len(eventsPerDocker)
+				errorDockerNum++
+			}
+			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Created=%v, Event Received=%v, No.Error Events=%v, No.Bad Order Events=%v, No.Error Docker=%v, No.Extra Event Docker=%v, No.Missing Event Docker=%v, No.Right Order Wrong Time Event Docker=%v, No.Wrong Order Right Time Event Docker=%v, No.Wrong Order Wrong Time Event Docker=%v]",
+				len(dockerIDs)*2, len(events), errorEventNum, badOrderEventNum, errorDockerNum, extraEventDocker, missingEventDocker, orderRightTimeWrongEventDocker, orderWrongTimeRightEventDocker, orderWrongTimeWrongEventDocker))
 		}
 	}
 }
