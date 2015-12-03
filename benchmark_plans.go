@@ -149,12 +149,14 @@ func benchmarkEventLossRate(client *docker.Client) {
 					if event.Status == "create" {
 						dockerIDMap[event.ID] = true
 					} else {
+						helpers.LogTime(fmt.Sprintf("Detail Info[Mismatched Event: %+v", event))
 						mismatchEventNum++
 					}
 				} else {
 					if created && event.Status == "destroy" {
 						dockerIDMap[event.ID] = false
 					} else {
+						helpers.LogTime(fmt.Sprintf("Detail Info[Mismatched Event: %+v", event))
 						mismatchEventNum++
 					}
 				}
