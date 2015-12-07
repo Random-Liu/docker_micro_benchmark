@@ -78,7 +78,7 @@ func CreateAliveContainers(client *docker.Client, num int) {
 	}
 }
 
-func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, all bool) []int {
+func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, all bool, stopchan chan int) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	for {
@@ -86,11 +86,19 @@ func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.
 		client.ListContainers(docker.ListContainersOptions{All: all})
 		end := time.Now()
 		latencies = append(latencies, int(end.Sub(start).Nanoseconds()))
-		if time.Now().Sub(startTime) >= testPeriod {
-			break
-		}
-		if curPeriod != 0 {
-			time.Sleep(curPeriod)
+		if stopchan == nil {
+			if time.Now().Sub(startTime) >= testPeriod {
+				break
+			}
+		} else {
+			select {
+			case <-stopchan:
+				break
+			default:
+				if curPeriod != 0 {
+					time.Sleep(curPeriod)
+				}
+			}
 		}
 	}
 	return latencies
@@ -122,7 +130,7 @@ func DoParalListContainerBenchMark(client *docker.Client, curPeriod, testPeriod 
 	latenciesTable := make([][]int, routineNumber)
 	for i := 0; i < routineNumber; i++ {
 		go func(index int) {
-			latenciesTable[index] = DoListContainerBenchMark(client, curPeriod, testPeriod, all)
+			latenciesTable[index] = DoListContainerBenchMark(client, curPeriod, testPeriod, all, nil)
 			wg.Done()
 		}(i)
 	}

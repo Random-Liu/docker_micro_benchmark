@@ -29,10 +29,10 @@ func benchmarkVariesContainerNumber(client *docker.Client) {
 		containerIds := helpers.GetContainerIds(client)
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			defaultPeriod, curDeadContainerNum, curAliveContainerNum, true))
-		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true))
+		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true, nil))
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			defaultPeriod, curDeadContainerNum, curAliveContainerNum, false))
-		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false))
+		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false, nil))
 		helpers.LogTime(fmt.Sprintf("Inspect Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d]",
 			defaultPeriod, curDeadContainerNum, curAliveContainerNum))
 		helpers.LogLatency(helpers.DoInspectContainerBenchMark(client, defaultPeriod, shortTestPeriod, containerIds))
@@ -46,10 +46,10 @@ func benchmarkVariesContainerNumber(client *docker.Client) {
 		containerIds := helpers.GetContainerIds(client)
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			defaultPeriod, curDeadContainerNum, curAliveContainerNum, true))
-		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true))
+		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true, nil))
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			defaultPeriod, curDeadContainerNum, curAliveContainerNum, false))
-		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false))
+		helpers.LogLatency(helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false, nil))
 		helpers.LogTime(fmt.Sprintf("Inspect Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d]",
 			defaultPeriod, curDeadContainerNum, curAliveContainerNum))
 		helpers.LogLatency(helpers.DoInspectContainerBenchMark(client, defaultPeriod, shortTestPeriod, containerIds))
@@ -63,10 +63,10 @@ func benchmarkVariesPeriod(client *docker.Client) {
 	for _, curPeriod := range listPeriods {
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			curPeriod, curDeadContainerNum, curAliveContainerNum, true))
-		helpers.LogLatency(helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, true))
+		helpers.LogLatency(helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, true, nil))
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			curPeriod, curDeadContainerNum, curAliveContainerNum, false))
-		helpers.LogLatency(helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, false))
+		helpers.LogLatency(helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, false, nil))
 	}
 
 	for _, curPeriod := range inspectPeriods {
@@ -94,6 +94,62 @@ func benchmarkVariesRoutineNumber(client *docker.Client) {
 }
 
 func benchmarkEventStream(client *docker.Client) {
+	// Benchmark Event Listener
+	helpers.LogTime("Event Stream Benchmark - Event Listener")
+	for i, frequency := range eventFrequency {
+		routineNumber := eventRoutines[i]
+		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Frequency=%v, No.Routines=%d, TestPeriod=%v]",
+			frequency, routineNumber, shortTestPeriod))
+		var latencies []int
+		stopchan := make(chan int, 0)
+		wg.Add(1)
+		go func() {
+			latencies, _ = helpers.DoEventStreamBenchMark(stopchan, client)
+			wg.Done()
+		}()
+		cmd := exec.Command("event_generator/event_generator", strconv.Itoa(frequency), strconv.Itoa(routineNumber),
+			strconv.FormatInt(shortTestPeriod.Nanoseconds(), 10), endpoint)
+		if out, err := cmd.Output(); err != nil {
+			panic(fmt.Sprintf("Error get output: %v", err))
+		} else {
+			cmd.Run()
+			fmt.Print(string(out))
+		}
+		// Just make sure that all the events are received
+		time.Sleep(time.Second)
+		close(stopchan)
+		wg.Wait()
+		helpers.LogLatency(latencies)
+		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v, Event Received=%v]", len(latencies)))
+	}
+
+	helpers.LogTime("Event Stream Benchmark - Relist")
+	for i, frequency := range eventFrequency {
+		routineNumber := eventRoutines[i]
+		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Frequency=%v, No.Routines=%d, ResyncPeriod=%v, TestPeriod=%v]",
+			frequency, routineNumber, resyncPeriod, shortTestPeriod))
+		stopchan := make(chan int, 0)
+		wg.Add(1)
+		go func() {
+			_ = helpers.DoListContainerBenchMark(client, resyncPeriod, shortTestPeriod, true, stopchan)
+			wg.Done()
+		}()
+		cmd := exec.Command("event_generator/event_generator", strconv.Itoa(frequency), strconv.Itoa(routineNumber),
+			strconv.FormatInt(shortTestPeriod.Nanoseconds(), 10), endpoint)
+		if out, err := cmd.Output(); err != nil {
+			panic(fmt.Sprintf("Error get output: %v", err))
+		} else {
+			cmd.Run()
+			fmt.Print(string(out))
+		}
+		// Just make sure that all the events are received
+		time.Sleep(time.Second)
+		close(stopchan)
+		wg.Wait()
+	}
+}
+
+func benchmarkListWithEvent(client *docker.Client) {
 	for i, frequency := range eventFrequency {
 		routineNumber := eventRoutines[i]
 		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Frequency=%v, No.Routines=%d]",
@@ -119,7 +175,7 @@ func benchmarkEventStream(client *docker.Client) {
 		stopchan <- 1
 		wg.Wait()
 		helpers.LogLatency(latencies)
-		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v, Event Received=%v]", len(latencies)))
+		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v]", len(latencies)))
 	}
 }
 

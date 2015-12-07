@@ -4,7 +4,6 @@ import (
 	"fmt"
 	docker "github.com/fsouza/go-dockerclient"
 	"os"
-	//"os/exec"
 )
 
 func main() {
