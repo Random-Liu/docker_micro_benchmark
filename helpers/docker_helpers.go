@@ -88,16 +88,16 @@ func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.
 		latencies = append(latencies, int(end.Sub(start).Nanoseconds()))
 		if stopchan == nil {
 			if time.Now().Sub(startTime) >= testPeriod {
-				break
+				return latencies
 			}
 		} else {
 			select {
 			case <-stopchan:
-				break
+				return latencies
 			default:
-				if curPeriod != 0 {
-					time.Sleep(curPeriod)
-				}
+			}
+			if curPeriod != 0 {
+				time.Sleep(curPeriod)
 			}
 		}
 	}

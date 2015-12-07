@@ -120,9 +120,10 @@ func benchmarkEventStream(client *docker.Client) {
 		close(stopchan)
 		wg.Wait()
 		helpers.LogLatency(latencies)
-		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v, Event Received=%v]", len(latencies)))
+		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v]", len(latencies)))
 	}
 
+	// Benchmark Relist
 	helpers.LogTime("Event Stream Benchmark - Relist")
 	for i, frequency := range eventFrequency {
 		routineNumber := eventRoutines[i]
@@ -146,36 +147,6 @@ func benchmarkEventStream(client *docker.Client) {
 		time.Sleep(time.Second)
 		close(stopchan)
 		wg.Wait()
-	}
-}
-
-func benchmarkListWithEvent(client *docker.Client) {
-	for i, frequency := range eventFrequency {
-		routineNumber := eventRoutines[i]
-		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Frequency=%v, No.Routines=%d]",
-			frequency, routineNumber))
-		var latencies []int
-		stopchan := make(chan int, 1)
-		defer close(stopchan)
-		wg.Add(1)
-		go func() {
-			latencies, _ = helpers.DoEventStreamBenchMark(stopchan, client)
-			wg.Done()
-		}()
-		cmd := exec.Command("event_generator/event_generator", strconv.Itoa(frequency), strconv.Itoa(routineNumber),
-			strconv.FormatInt(shortTestPeriod.Nanoseconds(), 10), endpoint)
-		if out, err := cmd.Output(); err != nil {
-			panic(fmt.Sprintf("Error get output: %v", err))
-		} else {
-			cmd.Run()
-			fmt.Print(string(out))
-		}
-		// Just make sure that all the events are received
-		time.Sleep(time.Second)
-		stopchan <- 1
-		wg.Wait()
-		helpers.LogLatency(latencies)
-		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Event Number=%v]", len(latencies)))
 	}
 }
 

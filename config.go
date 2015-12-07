@@ -12,7 +12,7 @@ var (
 // Period configuration
 var (
 	defaultPeriod   = 200 * time.Millisecond
-	shortTestPeriod = 20 * time.Second
+	shortTestPeriod = 10 * time.Second
 	longTestPeriod  = 50 * time.Second
 )
 
