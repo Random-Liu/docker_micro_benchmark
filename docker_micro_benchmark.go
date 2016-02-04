@@ -7,8 +7,11 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
+	usage := func() {
 		fmt.Printf("Usage: %s -[c|p|r|e|l]\n", os.Args[0])
+	}
+	if len(os.Args) != 2 {
+		usage()
 		return
 	}
 	client, _ := docker.NewClient(endpoint)
@@ -24,5 +27,6 @@ func main() {
 	case "-l":
 		benchmarkEventLossRate(client)
 	default:
+		usage()
 	}
 }

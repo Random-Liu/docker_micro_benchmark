@@ -60,6 +60,15 @@ func benchmarkVariesPeriod(client *docker.Client) {
 	curAliveContainerNum := helpers.GetContainerNum(client, false)
 	curDeadContainerNum := helpers.GetContainerNum(client, true) - curAliveContainerNum
 	containerIds := helpers.GetContainerIds(client)
+	eVars := map[string]interface{}{
+		"#alive": curAliveContainerNum,
+		"#dead":  curDeadContainerNum,
+		"period": longTestPeriod,
+		"all":    true,
+	}
+	helpers.LogEVar(eVars)
+	helpers.LogLabels("#routines")
+
 	for _, curPeriod := range listPeriods {
 		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, All=%v]",
 			curPeriod, curDeadContainerNum, curAliveContainerNum, true))
@@ -80,16 +89,21 @@ func benchmarkVariesRoutineNumber(client *docker.Client) {
 	curAliveContainerNum := helpers.GetContainerNum(client, false)
 	curDeadContainerNum := helpers.GetContainerNum(client, true) - curAliveContainerNum
 	containerIds := helpers.GetContainerIds(client)
-	for _, curRoutineNumber := range routines {
-		helpers.LogTime(fmt.Sprintf("List Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, No.Routines=%d, All=%v]",
-			resyncPeriod, curDeadContainerNum, curAliveContainerNum, curRoutineNumber, true))
-		helpers.LogLatency(helpers.DoParalListContainerBenchMark(client, resyncPeriod, shortTestPeriod, curRoutineNumber, true))
+	eVars := map[string]interface{}{
+		"#alive":       curAliveContainerNum,
+		"#dead":        curDeadContainerNum,
+		"all":          true,
+		"list freq":    resyncPeriod,
+		"inspect freq": routineInspectPeriod,
+		"period":       shortTestPeriod,
 	}
-
+	helpers.LogEVar(eVars)
+	helpers.LogLabels("#routines")
 	for _, curRoutineNumber := range routines {
-		helpers.LogTime(fmt.Sprintf("Inspect Benchmark[Period=%v, No.DeadContainers=%d, No.AliveContainers=%d, No.Routines=%d]",
-			routineInspectPeriod, curDeadContainerNum, curAliveContainerNum, curRoutineNumber))
-		helpers.LogLatency(helpers.DoParalInspectContainerBenchMark(client, routineInspectPeriod, shortTestPeriod, curRoutineNumber, containerIds))
+		helpers.LogLatencyNew(fmt.Sprintf("%d", curRoutineNumber), helpers.DoParalListContainerBenchMark(client, resyncPeriod, shortTestPeriod, curRoutineNumber, true))
+	}
+	for _, curRoutineNumber := range routines {
+		helpers.LogLatencyNew(fmt.Sprintf("%d", curRoutineNumber), helpers.DoParalInspectContainerBenchMark(client, routineInspectPeriod, shortTestPeriod, curRoutineNumber, containerIds))
 	}
 }
 
