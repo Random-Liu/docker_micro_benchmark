@@ -28,7 +28,9 @@ doBenchmark() {
   kill $DOCKER_PIDSTAT
   kill $SAR_PID
   cd $RESULT/$2
-  $GNUPLOT ../../PLOTDIR/cpu_plot
+  $GNUPLOT ../../$PLOTDIR/cpu_plot
+  $GNUPLOT ../../$PLOTDIR/latency_plot
+  $GNUPLOT ../../$PLOTDIR/$2/result_plot
   cd -
 }
 
@@ -42,7 +44,7 @@ while [ "$1" != "" ]; do
       DOCKER_NUMBER=`docker ps -a | wc -l`
       DOCKER_NUMBER=`expr $DOCKER_NUMBER - 1`
       if [ $DOCKER_NUMBER -ne 0 ]; then
-        shell/kill_all_dockers.sh
+        shell/kill_all_dockers.sh > /dev/null
       fi 
       echo "Benchmark with different container numbers"
       doBenchmark $1 varies_containers
@@ -58,16 +60,17 @@ while [ "$1" != "" ]; do
       doBenchmark $1 varies_routines
       shift
       ;;
-    -e )
-      echo "Benchmark event stream"
-      doBenchmark $1 event_stream
-      shift
-      ;;
-    -l )
-      echo "Benchmark event loss rate"
-      doBenchmark $1 event_loss_rate
-      shift
-      ;;
+# Enable event stream benchmark when gnuplot for event stream is added
+#    -e )
+#      echo "Benchmark event stream"
+#      doBenchmark $1 event_stream
+#      shift
+#      ;;
+#    -l )
+#      echo "Benchmark event loss rate"
+#      doBenchmark $1 event_loss_rate
+#      shift
+#      ;;
     * )
       usage
       exit 1
