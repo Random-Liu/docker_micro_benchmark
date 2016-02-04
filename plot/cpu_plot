@@ -1,0 +1,6 @@
+set terminal png
+set output 'cpu.png'
+set timefmt "%H:%M:%S"
+set xdata time
+set style data lines
+plot 'cpu_benchmark.dat' every ::4 using 1:8 t 'benchmark cpu', 'cpu_docker_daemon.dat' every ::4 using 1:8 t 'docker cpu'

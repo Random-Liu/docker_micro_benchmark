@@ -2,29 +2,34 @@
 RESULT=result
 DOCKER_MICRO_BENCHMARK=./docker_micro_benchmark
 STAT_TOOL=pidstat
+GNUPLOT=gnuplot
+PLOTDIR=plot
 
 usage () {
   echo 'Usage : $0 -[c|p|r|e|l]'
   exit
 }
 
-# $1 parameter, $2 file suffix
+# $1 parameter, $2 directoy name
 doBenchmark() {
   if [ ! -d $2 ]; then
     mkdir $RESULT/$2
   fi
-  LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/$2/sar_benchmark_$2.txt &
+  LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/$2/sar_benchmark.dat &
   SAR_PID=$!
-  $DOCKER_MICRO_BENCHMARK $1 > $RESULT/$2/result_benchmark_$2.txt &
+  $DOCKER_MICRO_BENCHMARK $1 > $RESULT/$2/result_benchmark.dat &
   BENCHMARK_PID=$!
-  $STAT_TOOL -p $BENCHMARK_PID 1 > $RESULT/$2/cpu_benchmark_$2.txt &
+  $STAT_TOOL -p $BENCHMARK_PID 1 > $RESULT/$2/cpu_benchmark.dat &
   DOCKER_PID=`ps -ef | awk '$8=="/usr/bin/docker" {print $2}'`
-  $STAT_TOOL -p $DOCKER_PID 1 > $RESULT/$2/cpu_docker_daemon_$2.txt &
+  $STAT_TOOL -p $DOCKER_PID 1 > $RESULT/$2/cpu_docker_daemon.dat &
   DOCKER_PIDSTAT=$!
   wait $BENCHMARK_PID
   kill $SAR_PID
   kill $DOCKER_PIDSTAT
   kill $SAR_PID
+  cd $RESULT/$2
+  $GNUPLOT ../../PLOTDIR/cpu_plot
+  cd -
 }
 
 if [ ! -d $RESULT ]; then
