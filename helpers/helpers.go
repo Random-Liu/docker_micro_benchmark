@@ -13,8 +13,8 @@ var last = time.Now()
 
 func LogTime(label string) {
 	now := time.Now()
-	fmt.Printf("%02d:%02d:%02d\t%s\n", last.Hour(), last.Minute(), last.Second(), label)
-	fmt.Printf("%02d:%02d:%02d\t%s\n", now.Hour(), now.Minute(), now.Second(), label)
+	fmt.Printf("%02d:%02d:%02d:%02d\t%s\n", last.Day(), last.Hour(), last.Minute(), last.Second(), label)
+	fmt.Printf("%02d:%02d:%02d:%02d\t%s\n", now.Day(), now.Hour(), now.Minute(), now.Second(), label)
 	last = now
 }
 

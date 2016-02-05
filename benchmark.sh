@@ -12,26 +12,27 @@ usage () {
 
 # $1 parameter, $2 directoy name
 doBenchmark() {
-  if [ ! -d $2 ]; then
-    mkdir $RESULT/$2
+  RDIR=$RESULT/$2
+  if [ ! -d  $RDIR ]; then
+    mkdir $RDIR
   fi
-  LC_ALL=C sar -rubwS -P ALL 1 > $RESULT/$2/sar_benchmark.dat &
+  LC_ALL=C sar -rubwS -P ALL 1 > $RDIR/sar_benchmark.dat &
   SAR_PID=$!
-  $DOCKER_MICRO_BENCHMARK $1 > $RESULT/$2/result_benchmark.dat &
+  $DOCKER_MICRO_BENCHMARK $1 > $RDIR/result_benchmark.dat &
   BENCHMARK_PID=$!
-  $STAT_TOOL -p $BENCHMARK_PID 1 > $RESULT/$2/cpu_benchmark.dat &
+  $STAT_TOOL -p $BENCHMARK_PID 1 > $RDIR/cpu_benchmark.dat &
   DOCKER_PID=`ps -ef | awk '$8=="/usr/bin/docker" {print $2}'`
-  $STAT_TOOL -p $DOCKER_PID 1 > $RESULT/$2/cpu_docker_daemon.dat &
+  $STAT_TOOL -p $DOCKER_PID 1 > $RDIR/cpu_docker_daemon.dat &
   DOCKER_PIDSTAT=$!
   wait $BENCHMARK_PID
   kill $SAR_PID
   kill $DOCKER_PIDSTAT
   kill $SAR_PID
-  cd $RESULT/$2
+  cd $RDIR 
   $GNUPLOT ../../$PLOTDIR/cpu_plot
   $GNUPLOT ../../$PLOTDIR/latency_plot
   $GNUPLOT ../../$PLOTDIR/$2/result_plot
-  cd -
+  cd - > /dev/null
 }
 
 if [ ! -d $RESULT ]; then
@@ -41,9 +42,9 @@ fi
 while [ "$1" != "" ]; do
   case $1 in
     -c )
-      DOCKER_NUMBER=`docker ps -a | wc -l`
-      DOCKER_NUMBER=`expr $DOCKER_NUMBER - 1`
-      if [ $DOCKER_NUMBER -ne 0 ]; then
+      CONTAINER_NUMBER=`docker ps -a | wc -l`
+      CONTAINER_NUMBER=`expr $CONTAINER_NUMBER - 1`
+      if [ $CONTAINER_NUMBER -ne 0 ]; then
         shell/kill_all_dockers.sh > /dev/null
       fi 
       echo "Benchmark with different container numbers"
