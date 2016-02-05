@@ -18,6 +18,11 @@ func LogTime(label string) {
 	last = now
 }
 
+func LogTitle(title string) {
+	fmt.Println()
+	fmt.Println(title)
+}
+
 func LogEVar(vars map[string]interface{}) {
 	for k, v := range vars {
 		fmt.Printf("%s=%v ", k, v)
@@ -30,11 +35,10 @@ func LogLabels(labels string) {
 }
 
 func LogLatencyNew(variables string, latencies []int) {
-	if len(latencies) <= 0 {
-		panic("No latency record!")
-	}
-	sort.Ints(latencies)
 	average := func(latencies []int) int {
+		if len(latencies) <= 0 {
+			return 0
+		}
 		total := 0
 		for _, l := range latencies {
 			total += l
@@ -42,6 +46,7 @@ func LogLatencyNew(variables string, latencies []int) {
 		return total / len(latencies)
 	}
 
+	sort.Ints(latencies)
 	var avgs [4]float64
 	for i, rate := range rates {
 		n := int(math.Ceil((1 - rate) * float64(len(latencies))))

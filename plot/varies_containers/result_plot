@@ -1,5 +1,5 @@
 set terminal png
-set output 'result.png'
+set output ofilename 
 set timefmt "%d:%H:%M:%S"
 set format x "%M:%S"
 set xdata time
@@ -7,4 +7,4 @@ set xlabel "Time (M:S)"
 set ylabel "#Containers"
 set yrange [0:850]
 set style data line
-plot 'result_benchmark.dat' every ::2 using 1:6 t '#dead', '' every ::2 using 1:7 t '#alive', '' every ::2 using 1:8 t '#total'
+plot ifilename every ::2 using 1:6 t '#dead', '' every ::2 using 1:7 t '#alive', '' every ::2 using 1:8 t '#total'

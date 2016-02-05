@@ -4,13 +4,14 @@ DOCKER_MICRO_BENCHMARK=./docker_micro_benchmark
 STAT_TOOL=pidstat
 GNUPLOT=gnuplot
 PLOTDIR=plot
+AWK=awk
 
 usage () {
   echo 'Usage : $0 -[c|p|r|e|l]'
   exit
 }
 
-# $1 parameter, $2 directoy name
+# $1 parameter, $2 benchmark name
 doBenchmark() {
   RDIR=$RESULT/$2
   if [ ! -d  $RDIR ]; then
@@ -28,10 +29,27 @@ doBenchmark() {
   kill $SAR_PID
   kill $DOCKER_PIDSTAT
   kill $SAR_PID
-  cd $RDIR 
+  doParse $2 
+}
+
+# $1 benchmark name
+doParse() {
+  RDIR=$RESULT/$1
+  DATA=result_benchmark.dat
+  TMP=tmp
+  TYPE=png
+  cd $RDIR
+  if [ -d $TMP ]; then
+    rm -r $TMP
+  fi
+  mkdir $TMP
+  $AWK '/^$/{getline file; "tmp/"file < /dev/null ; next} !/^$/{print >> "tmp/"file}' < $DATA
+  for file in `ls $TMP`; do
+    $GNUPLOT -e "ifilename='tmp/$file'; ofilename='latency-$file.$TYPE'" ../../$PLOTDIR/latency_plot
+    $GNUPLOT -e "ifilename='tmp/$file'; ofilename='$file.$TYPE'" ../../$PLOTDIR/$1/result_plot
+  done
   $GNUPLOT ../../$PLOTDIR/cpu_plot
-  $GNUPLOT ../../$PLOTDIR/latency_plot
-  $GNUPLOT ../../$PLOTDIR/$2/result_plot
+  rm -r $TMP
   cd - > /dev/null
 }
 
