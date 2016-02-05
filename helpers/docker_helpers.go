@@ -96,9 +96,9 @@ func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.
 				return latencies
 			default:
 			}
-			if curPeriod != 0 {
-				time.Sleep(curPeriod)
-			}
+		}
+		if curPeriod != 0 {
+			time.Sleep(curPeriod)
 		}
 	}
 	return latencies
