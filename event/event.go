@@ -13,12 +13,11 @@ var (
 	wg = &sync.WaitGroup{}
 )
 
-func StartGeneratingEvent(client *docker.Client, frequency int64, routineNumber int, testPeriod time.Duration) []string {
-	period := time.Duration(time.Second.Nanoseconds() / frequency * int64(routineNumber))
+func StartGeneratingEvent(client *docker.Client, interval time.Duration, routineNumber int, testPeriod time.Duration) []string {
 	groupedDockerIDs := make([][]string, routineNumber)
 	startTime := time.Now()
 	wg.Add(routineNumber)
-	helpers.LogTime(fmt.Sprintf("Start Generating Event[Frequency=%v]", frequency))
+	helpers.LogTime(fmt.Sprintf("Start Generating Event[Frequency=%v]", interval))
 	for id := 0; id < routineNumber; id++ {
 		go func(id int) {
 			client, _ = docker.NewClient("unix:///var/run/docker.sock")
@@ -28,7 +27,7 @@ func StartGeneratingEvent(client *docker.Client, frequency int64, routineNumber 
 				if time.Now().Sub(startTime) >= testPeriod {
 					break
 				}
-				time.Sleep(period)
+				time.Sleep(interval)
 			}
 			wg.Done()
 		}(id)
@@ -40,6 +39,6 @@ func StartGeneratingEvent(client *docker.Client, frequency int64, routineNumber 
 		dockerIDs = append(dockerIDs, group...)
 		totalTimes += len(group)
 	}
-	helpers.LogTime(fmt.Sprintf("Stop Generating Event[Expected Frequency=%v, Real Frequency=%v, Total Event Number=%v]", frequency, float64(totalTimes)/testPeriod.Seconds(), totalTimes*2))
+	helpers.LogTime(fmt.Sprintf("Stop Generating Event[Expected Frequency=%v, Real Frequency=%v, Total Event Number=%v]", interval, float64(totalTimes)/testPeriod.Seconds(), totalTimes*2))
 	return dockerIDs
 }

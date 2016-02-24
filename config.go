@@ -13,7 +13,7 @@ var (
 var (
 	defaultPeriod   = 200 * time.Millisecond
 	shortTestPeriod = 10 * time.Second
-	longTestPeriod  = 50 * time.Second
+	longTestPeriod  = 3 * time.Second
 )
 
 var (
@@ -37,6 +37,20 @@ var (
 		100 * time.Millisecond, // 10 insepct/second = 10 pods * 1 containers = 5 pods * 2 containers
 	}
 )
+
+// For container start benchmark
+var containerStartConfig = map[string]interface{}{
+	"qps": []float64{
+		1.0,
+		2.0,
+		4.0,
+		8.0,
+		16.0,
+		32.0,
+		64.0,
+	},
+	"routine": 2,
+}
 
 // For varies container number benchmark
 var (
@@ -71,41 +85,21 @@ var (
 
 // For docker event stream benchmark
 var (
-	// This is just the plan, we'll calculate the real frequency
-	eventFrequency = []int{
-		1, // events/second
-		2,
-		5,
-		10,
-		20,
-		50,
-		100,
-		200,
-	}
+	eventInterval = 100 * time.Millisecond
 	eventRoutines = []int{
-		1,
 		1,
 		2,
 		3,
 		4,
-		10,
-		50,
-		100,
+		5,
+		6,
+		7,
+		8,
 	}
 )
 
 // For docker event loss rate
 var (
-	defaultEventFrequency = 100
-	defaultEventRoutines  = 50
-	timesForEachPeriod    = 3
-	testPeriodList        = []time.Duration{
-		10 * time.Second,
-		20 * time.Second,
-		30 * time.Second,
-		1 * time.Minute,
-		2 * time.Minute,
-		5 * time.Minute,
-		10 * time.Minute,
-	}
+	defaultEventRoutines = 6
+	eventLossTestPeriod  = 1 * time.Hour
 )

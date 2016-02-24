@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"os/exec"
-	"strconv"
+	//	"fmt"
+	//"os/exec"
+	//"strconv"
 	"sync"
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/random-liu/docker_micro_benchmark/event"
+	//"github.com/random-liu/docker_micro_benchmark/event"
 	"github.com/random-liu/docker_micro_benchmark/helpers"
 )
 
@@ -16,89 +16,114 @@ var (
 	wg = &sync.WaitGroup{}
 )
 
+func benchmarkContainerStart(client *docker.Client) {
+	cfg := containerStartConfig
+	helpers.LogTitle("container_start")
+	helpers.LogEVar(map[string]interface{}{"period": longTestPeriod})
+	helpers.LogLabels("qps", "cps")
+	for _, q := range cfg["qps"].([]float64) {
+		start := time.Now()
+		latencies := helpers.DoParalContainerStartBenchMark(client, q, longTestPeriod, cfg["routine"].(int))
+		cps := float64(len(latencies)) / time.Now().Sub(start).Seconds()
+		helpers.LogLatencyNew(latencies, helpers.Ftoas(q, cps)...)
+
+		start = time.Now()
+		latencies = helpers.DoParalContainerStopBenchMark(client, q, cfg["routine"].(int))
+		cps = float64(len(latencies)) / time.Now().Sub(start).Seconds()
+		helpers.LogLatencyNew(latencies, helpers.Ftoas(q, cps)...)
+	}
+}
+
 func benchmarkVariesContainerNumber(client *docker.Client) {
-	curDeadContainerNum := deadContainers[0]
-	curAliveContainerNum := aliveContainers[0]
-	helpers.CreateDeadContainers(client, curDeadContainerNum)
-	helpers.CreateAliveContainers(client, curAliveContainerNum)
+	dead := deadContainers[0]
+	alive := aliveContainers[0]
+	ids := helpers.CreateDeadContainers(client, dead)
+	ids = append(ids, helpers.CreateAliveContainers(client, alive)...)
 	helpers.LogTitle("varies_container")
 	helpers.LogEVar(map[string]interface{}{
 		"period":   shortTestPeriod,
 		"interval": defaultPeriod,
 	})
-	helpers.LogLabels("#dead\t#alive\t#total")
-	for _, containerNum := range deadContainers {
+	helpers.LogLabels("#dead", "#alive", "#total")
+	for _, num := range deadContainers {
 		// Create more dead containers
-		helpers.CreateDeadContainers(client, containerNum-curDeadContainerNum)
-		curDeadContainerNum = containerNum
-		// Get newest container ids
-		containerIds := helpers.GetContainerIds(client)
-		helpers.LogLatencyNew(fmt.Sprintf("%d\t%d\t%d", curDeadContainerNum, curAliveContainerNum, curDeadContainerNum+curAliveContainerNum), helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true, nil))
-		helpers.LogLatencyNew(fmt.Sprintf("%d\t%d\t%d", curDeadContainerNum, curAliveContainerNum, curDeadContainerNum+curAliveContainerNum), helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false, nil))
-		helpers.LogLatencyNew(fmt.Sprintf("%d\t%d\t%d", curDeadContainerNum, curAliveContainerNum, curDeadContainerNum+curAliveContainerNum), helpers.DoInspectContainerBenchMark(client, defaultPeriod, shortTestPeriod, containerIds))
+		ids = append(ids, helpers.CreateDeadContainers(client, num-dead)...)
+		dead = num
+		total := dead + alive
+		latencies := helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true, nil)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(dead, alive, total)...)
+		latencies = helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false, nil)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(dead, alive, total)...)
+		latencies = helpers.DoInspectContainerBenchMark(client, defaultPeriod, shortTestPeriod, ids)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(dead, alive, total)...)
 	}
 
-	for _, containerNum := range aliveContainers {
+	for _, num := range aliveContainers {
 		// Create more alive containers
-		helpers.CreateAliveContainers(client, containerNum-curAliveContainerNum)
-		curAliveContainerNum = containerNum
-		// Get newest container ids
-		containerIds := helpers.GetContainerIds(client)
-		helpers.LogLatencyNew(fmt.Sprintf("%d\t%d\t%d", curDeadContainerNum, curAliveContainerNum, curDeadContainerNum+curAliveContainerNum), helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true, nil))
-		helpers.LogLatencyNew(fmt.Sprintf("%d\t%d\t%d", curDeadContainerNum, curAliveContainerNum, curDeadContainerNum+curAliveContainerNum), helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false, nil))
-		helpers.LogLatencyNew(fmt.Sprintf("%d\t%d\t%d", curDeadContainerNum, curAliveContainerNum, curDeadContainerNum+curAliveContainerNum), helpers.DoInspectContainerBenchMark(client, defaultPeriod, shortTestPeriod, containerIds))
+		ids = append(ids, helpers.CreateAliveContainers(client, num-alive)...)
+		alive = num
+		total := dead + alive
+		latencies := helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, true, nil)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(dead, alive, total)...)
+		latencies = helpers.DoListContainerBenchMark(client, defaultPeriod, shortTestPeriod, false, nil)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(dead, alive, total)...)
+		latencies = helpers.DoInspectContainerBenchMark(client, defaultPeriod, shortTestPeriod, ids)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(dead, alive, total)...)
 	}
 }
 
 func benchmarkVariesPeriod(client *docker.Client) {
-	curAliveContainerNum := helpers.GetContainerNum(client, false)
-	curDeadContainerNum := helpers.GetContainerNum(client, true) - curAliveContainerNum
+	alive := helpers.GetContainerNum(client, false)
+	dead := helpers.GetContainerNum(client, true) - alive
 	containerIds := helpers.GetContainerIds(client)
 	helpers.LogTitle("list_all")
 	helpers.LogEVar(map[string]interface{}{
-		"#alive": curAliveContainerNum,
-		"#dead":  curDeadContainerNum,
+		"#alive": alive,
+		"#dead":  dead,
 		"all":    true,
 		"period": longTestPeriod,
 	})
 	helpers.LogLabels("interval")
 	for _, curPeriod := range listPeriods {
-		helpers.LogLatencyNew(fmt.Sprintf("%d", curPeriod/time.Millisecond), helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, true, nil))
+		latencies := helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, true, nil)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(int(curPeriod/time.Millisecond))...)
 	}
 
 	helpers.LogTitle("list_alive")
 	helpers.LogEVar(map[string]interface{}{
-		"#alive": curAliveContainerNum,
-		"#dead":  curDeadContainerNum,
+		"#alive": alive,
+		"#dead":  dead,
 		"all":    false,
 		"period": longTestPeriod,
 	})
 	helpers.LogLabels("interval")
 	for _, curPeriod := range listPeriods {
-		helpers.LogLatencyNew(fmt.Sprintf("%d", curPeriod/time.Millisecond), helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, false, nil))
+		latencies := helpers.DoListContainerBenchMark(client, curPeriod, longTestPeriod, false, nil)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(int(curPeriod/time.Millisecond))...)
 	}
 
 	helpers.LogTitle("inspect")
 	helpers.LogEVar(map[string]interface{}{
-		"#alive": curAliveContainerNum,
-		"#dead":  curDeadContainerNum,
+		"#alive": alive,
+		"#dead":  dead,
 		"period": shortTestPeriod,
 	})
 	helpers.LogLabels("interval")
 	for _, curPeriod := range inspectPeriods {
-		helpers.LogLatencyNew(fmt.Sprintf("%d", curPeriod/time.Millisecond), helpers.DoInspectContainerBenchMark(client, curPeriod, shortTestPeriod, containerIds))
+		latencies := helpers.DoInspectContainerBenchMark(client, curPeriod, shortTestPeriod, containerIds)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(int(curPeriod/time.Millisecond))...)
 	}
 }
 
 func benchmarkVariesRoutineNumber(client *docker.Client) {
-	curAliveContainerNum := helpers.GetContainerNum(client, false)
-	curDeadContainerNum := helpers.GetContainerNum(client, true) - curAliveContainerNum
+	alive := helpers.GetContainerNum(client, false)
+	dead := helpers.GetContainerNum(client, true) - alive
 	containerIds := helpers.GetContainerIds(client)
 
 	helpers.LogTitle("list_all")
 	helpers.LogEVar(map[string]interface{}{
-		"#alive":           curAliveContainerNum,
-		"#dead":            curDeadContainerNum,
+		"#alive":           alive,
+		"#dead":            dead,
 		"all":              true,
 		"interval":         resyncPeriod,
 		"inspect-interval": routineInspectPeriod,
@@ -106,29 +131,44 @@ func benchmarkVariesRoutineNumber(client *docker.Client) {
 	})
 	helpers.LogLabels("#routines")
 	for _, curRoutineNumber := range routines {
-		helpers.LogLatencyNew(fmt.Sprintf("%d", curRoutineNumber), helpers.DoParalListContainerBenchMark(client, resyncPeriod, shortTestPeriod, curRoutineNumber, true))
+		latencies := helpers.DoParalListContainerBenchMark(client, resyncPeriod, shortTestPeriod, curRoutineNumber, true)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(curRoutineNumber)...)
 	}
 
 	helpers.LogTitle("inspect")
 	helpers.LogEVar(map[string]interface{}{
-		"#alive":   curAliveContainerNum,
-		"#dead":    curDeadContainerNum,
+		"#alive":   alive,
+		"#dead":    dead,
 		"interval": routineInspectPeriod,
 		"period":   shortTestPeriod,
 	})
 	helpers.LogLabels("#routines")
 	for _, curRoutineNumber := range routines {
-		helpers.LogLatencyNew(fmt.Sprintf("%d", curRoutineNumber), helpers.DoParalInspectContainerBenchMark(client, routineInspectPeriod, shortTestPeriod, curRoutineNumber, containerIds))
+		latencies := helpers.DoParalInspectContainerBenchMark(client, routineInspectPeriod, shortTestPeriod, curRoutineNumber, containerIds)
+		helpers.LogLatencyNew(latencies, helpers.Itoas(curRoutineNumber)...)
 	}
 }
 
 func benchmarkEventStream(client *docker.Client) {
+	/*alive := helpers.GetContainerNum(client, false)
+	dead := helpers.GetContainerNum(client, true) - alive
+
 	// Benchmark Event Listener
+	helpers.LogTitle("events")
+	helpers.LogEVar(map[string]interface{}{
+		"#alive": alive,
+		"#dead":  dead,
+		//"all":              true,
+		//"interval":         resyncPeriod,
+		//"inspect-interval": routineInspectPeriod,
+		"period": shortTestPeriod,
+	})
+
 	helpers.LogTime("Event Stream Benchmark - Event Listener")
 	for i, frequency := range eventFrequency {
 		routineNumber := eventRoutines[i]
 		helpers.LogTime(fmt.Sprintf("Event Stream Benchmark[Frequency=%v, No.Routines=%d, TestPeriod=%v]",
-			frequency, routineNumber, shortTestPeriod))
+		frequency, routineNumber, shortTestPeriod))
 		var latencies []int
 		stopchan := make(chan int, 0)
 		wg.Add(1)
@@ -176,11 +216,11 @@ func benchmarkEventStream(client *docker.Client) {
 		time.Sleep(time.Second)
 		close(stopchan)
 		wg.Wait()
-	}
+	}*/
 }
 
 func benchmarkEventLossRate(client *docker.Client) {
-	for _, testPeriod := range testPeriodList {
+	/*for _, testPeriod := range testPeriodList {
 		for t := 1; t <= timesForEachPeriod; t++ {
 			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Frequency=%v, No.Routines=%d, Period=%v, Times=%v]",
 				defaultEventFrequency, defaultEventRoutines, testPeriod, t))
@@ -248,5 +288,5 @@ func benchmarkEventLossRate(client *docker.Client) {
 			helpers.LogTime(fmt.Sprintf("Event Stream Loss Rate Benchmark[Event Created=%v, Event Received=%v, No.Error Events=%v, No.Error Docker=%v, No.Bad Order Events=%v, No.Extra Event Docker=%v, No.Missing Event Docker=%v, No.Right Order Wrong Time Event Docker=%v, No.Wrong Order Right Time Event Docker=%v, No.Wrong Order Wrong Time Event Docker=%v]",
 				len(dockerIDs)*2, len(events), errorEventNum, errorDockerNum, badOrderEventNum, extraEventDocker, missingEventDocker, orderRightTimeWrongEventDocker, orderWrongTimeRightEventDocker, orderWrongTimeWrongEventDocker))
 		}
-	}
+	}*/
 }

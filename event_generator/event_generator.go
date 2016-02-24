@@ -12,16 +12,16 @@ import (
 
 func main() {
 	if len(os.Args) != 5 {
-		fmt.Printf("Usage: %s Frequency Routines TestPeriod EndPoint\n", os.Args[0])
+		fmt.Printf("Usage: %s Interval Routines TestPeriod EndPoint\n", os.Args[0])
 		return
 	}
-	var frequency, testPeriod int64
+	var interval, testPeriod int64
 	var routineNumber int
 	var client *docker.Client
 	var err error
-	frequency, err = strconv.ParseInt(os.Args[1], 10, 64)
+	interval, err = strconv.ParseInt(os.Args[1], 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("Error get frequency: %v", err))
+		panic(fmt.Sprintf("Error get interval: %v", err))
 	}
 	routineNumber, err = strconv.Atoi(os.Args[2])
 	if err != nil {
@@ -35,5 +35,5 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error create docker client: %v", err))
 	}
-	event.StartGeneratingEvent(client, frequency, routineNumber, time.Duration(testPeriod))
+	event.StartGeneratingEvent(client, time.Duration(interval), routineNumber, time.Duration(testPeriod))
 }

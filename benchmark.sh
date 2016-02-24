@@ -7,7 +7,7 @@ PLOTDIR=plot
 AWK=awk
 
 usage () {
-  echo 'Usage : $0 -[c|p|r|e|l]'
+  echo "Usage : `basename $0` -[o|c|p|r|e|l]"
   exit
 }
 
@@ -53,12 +53,22 @@ doParse() {
   cd - > /dev/null
 }
 
+if [ -z $1 ]; then
+  usage
+  exit 1
+fi
+
 if [ ! -d $RESULT ]; then
   mkdir $RESULT
 fi
 
 while [ "$1" != "" ]; do
   case $1 in
+    -o )
+      echo "Benchmark container operations"
+      doBenchmark $1 container_op 
+      shift
+      ;;
     -c )
       CONTAINER_NUMBER=`docker ps -a | wc -l`
       CONTAINER_NUMBER=`expr $CONTAINER_NUMBER - 1`
