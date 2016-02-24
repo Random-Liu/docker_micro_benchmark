@@ -43,10 +43,10 @@ doParse() {
     rm -r $TMP
   fi
   mkdir $TMP
-  $AWK '/^$/{getline file; "tmp/"file < /dev/null ; next} !/^$/{print >> "tmp/"file}' < $DATA
+  $AWK '/^$/{getline file; "'${TMP}'/"file < /dev/null ; next} !/^$/{print >> "'${TMP}'/"file}' < $DATA
   for file in `ls $TMP`; do
-    $GNUPLOT -e "ifilename='tmp/$file'; ofilename='latency-$file.$TYPE'" ../../$PLOTDIR/latency_plot
-    $GNUPLOT -e "ifilename='tmp/$file'; ofilename='$file.$TYPE'" ../../$PLOTDIR/$1/result_plot
+    $GNUPLOT -e "ifilename='${TMP}/$file'; ofilename='latency-$file.$TYPE'" ../../$PLOTDIR/latency_plot
+    $GNUPLOT -e "ifilename='${TMP}/$file'; ofilename='$file.$TYPE'" ../../$PLOTDIR/$1/result_plot
   done
   $GNUPLOT ../../$PLOTDIR/cpu_plot
   rm -r $TMP

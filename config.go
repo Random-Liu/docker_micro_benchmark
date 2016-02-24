@@ -13,7 +13,7 @@ var (
 var (
 	defaultPeriod   = 200 * time.Millisecond
 	shortTestPeriod = 10 * time.Second
-	longTestPeriod  = 3 * time.Second
+	longTestPeriod  = 50 * time.Second
 )
 
 var (
@@ -49,7 +49,7 @@ var containerStartConfig = map[string]interface{}{
 		32.0,
 		64.0,
 	},
-	"routine": 2,
+	"routine": 100,
 }
 
 // For varies container number benchmark
