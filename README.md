@@ -27,7 +27,7 @@ Docker micro benchmark supports 4 kinds of benchmarks:
 
 Instructions
 ------------
-#### Dependency
+#### Dependencies
 * golang
 * sysstat
 * gnuplot
