@@ -97,7 +97,7 @@ func CreateAliveContainers(client *docker.Client, num int) []string {
 	return ids
 }
 
-func DoListContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, all bool, stopchan chan int) []int {
+func DoListContainerBenchmark(client *docker.Client, interval, testPeriod time.Duration, all bool, stopchan chan int) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	for {
@@ -123,7 +123,7 @@ func DoListContainerBenchMark(client *docker.Client, interval, testPeriod time.D
 	return latencies
 }
 
-func DoInspectContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, containerIds []string) []int {
+func DoInspectContainerBenchmark(client *docker.Client, interval, testPeriod time.Duration, containerIds []string) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	rand.Seed(time.Now().Unix())
@@ -144,12 +144,12 @@ func DoInspectContainerBenchMark(client *docker.Client, interval, testPeriod tim
 }
 
 // Use true because that's the behaviour of the pod worker
-func DoParalListContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, routineNumber int, all bool) []int {
+func DoParalListContainerBenchmark(client *docker.Client, interval, testPeriod time.Duration, routineNumber int, all bool) []int {
 	wg.Add(routineNumber)
 	latenciesTable := make([][]int, routineNumber)
 	for i := 0; i < routineNumber; i++ {
 		go func(index int) {
-			latenciesTable[index] = DoListContainerBenchMark(client, interval, testPeriod, all, nil)
+			latenciesTable[index] = DoListContainerBenchmark(client, interval, testPeriod, all, nil)
 			wg.Done()
 		}(i)
 	}
@@ -161,12 +161,12 @@ func DoParalListContainerBenchMark(client *docker.Client, interval, testPeriod t
 	return allLatencies
 }
 
-func DoParalInspectContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, routineNumber int, containerIds []string) []int {
+func DoParalInspectContainerBenchmark(client *docker.Client, interval, testPeriod time.Duration, routineNumber int, containerIds []string) []int {
 	wg.Add(routineNumber)
 	latenciesTable := make([][]int, routineNumber)
 	for i := 0; i < routineNumber; i++ {
 		go func(index int) {
-			latenciesTable[index] = DoInspectContainerBenchMark(client, interval, testPeriod, containerIds)
+			latenciesTable[index] = DoInspectContainerBenchmark(client, interval, testPeriod, containerIds)
 			wg.Done()
 		}(i)
 	}
@@ -178,7 +178,7 @@ func DoParalInspectContainerBenchMark(client *docker.Client, interval, testPerio
 	return allLatencies
 }
 
-func DoParalContainerStartBenchMark(client *docker.Client, qps float64, testPeriod time.Duration, routineNumber int) []int {
+func DoParalContainerStartBenchmark(client *docker.Client, qps float64, testPeriod time.Duration, routineNumber int) []int {
 	wg.Add(routineNumber)
 	ratelimit := ratelimit.NewBucketWithRate(qps, int64(routineNumber))
 	latenciesTable := make([][]int, routineNumber)
@@ -209,7 +209,7 @@ func DoParalContainerStartBenchMark(client *docker.Client, qps float64, testPeri
 	return allLatencies
 }
 
-func DoParalContainerStopBenchMark(client *docker.Client, qps float64, routineNumber int) []int {
+func DoParalContainerStopBenchmark(client *docker.Client, qps float64, routineNumber int) []int {
 	ids := GetContainerIds(client)
 	idTable := make([][]string, routineNumber)
 	for i := 0; i < len(ids); i++ {
