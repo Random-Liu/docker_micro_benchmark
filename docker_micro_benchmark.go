@@ -8,7 +8,7 @@ import (
 
 func main() {
 	usage := func() {
-		fmt.Printf("Usage: %s -[o|c|p|r|e|l]\n", os.Args[0])
+		fmt.Printf("Usage: %s -[o|c|p|r]\n", os.Args[0])
 	}
 	if len(os.Args) != 2 {
 		usage()
@@ -25,10 +25,6 @@ func main() {
 		benchmarkVariesPeriod(client)
 	case "-r":
 		benchmarkVariesRoutineNumber(client)
-	case "-e":
-		benchmarkEventStream(client)
-	case "-l":
-		benchmarkEventLossRate(client)
 	default:
 		usage()
 	}

@@ -35,7 +35,7 @@ func LogLabels(labels ...string) {
 	fmt.Printf("time\t%%50\t%%75\t%%95\t%%99\t%s\n", strings.Join(labels, "\t"))
 }
 
-func LogLatencyNew(latencies []int, variables ...string) {
+func LogResult(latencies []int, variables ...string) {
 	average := func(latencies []int) int {
 		if len(latencies) <= 0 {
 			return 0
@@ -54,27 +54,6 @@ func LogLatencyNew(latencies []int, variables ...string) {
 		avgs[i] = float64(average(latencies[len(latencies)-n:])) / 1000000
 	}
 	LogTime(fmt.Sprintf("%.2f\t%.2f\t%.2f\t%.2f\t%s", avgs[0], avgs[1], avgs[2], avgs[3], strings.Join(variables, "\t")))
-}
-
-func LogLatency(latencies []int) {
-	if len(latencies) <= 0 {
-		panic("No latency record!")
-	}
-	sort.Ints(latencies)
-	average := func(latencies []int) int {
-		total := 0
-		for _, l := range latencies {
-			total += l
-		}
-		return total / len(latencies)
-	}
-
-	var avgs [4]float64
-	for i, rate := range rates {
-		n := int(math.Ceil((1 - rate) * float64(len(latencies))))
-		avgs[i] = float64(average(latencies[len(latencies)-n:])) / 1000000
-	}
-	LogTime(fmt.Sprintf("%f %f %f %f", avgs[0], avgs[1], avgs[2], avgs[3]))
 }
 
 func Itoas(nums ...int) []string {

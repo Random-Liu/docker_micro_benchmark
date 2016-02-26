@@ -97,7 +97,7 @@ func CreateAliveContainers(client *docker.Client, num int) []string {
 	return ids
 }
 
-func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, all bool, stopchan chan int) []int {
+func DoListContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, all bool, stopchan chan int) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	for {
@@ -116,14 +116,14 @@ func DoListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.
 			default:
 			}
 		}
-		if curPeriod != 0 {
-			time.Sleep(curPeriod)
+		if interval != 0 {
+			time.Sleep(interval)
 		}
 	}
 	return latencies
 }
 
-func DoInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, containerIds []string) []int {
+func DoInspectContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, containerIds []string) []int {
 	startTime := time.Now()
 	latencies := []int{}
 	rand.Seed(time.Now().Unix())
@@ -136,20 +136,20 @@ func DoInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod ti
 		if time.Now().Sub(startTime) >= testPeriod {
 			break
 		}
-		if curPeriod != 0 {
-			time.Sleep(curPeriod)
+		if interval != 0 {
+			time.Sleep(interval)
 		}
 	}
 	return latencies
 }
 
 // Use true because that's the behaviour of the pod worker
-func DoParalListContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, routineNumber int, all bool) []int {
+func DoParalListContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, routineNumber int, all bool) []int {
 	wg.Add(routineNumber)
 	latenciesTable := make([][]int, routineNumber)
 	for i := 0; i < routineNumber; i++ {
 		go func(index int) {
-			latenciesTable[index] = DoListContainerBenchMark(client, curPeriod, testPeriod, all, nil)
+			latenciesTable[index] = DoListContainerBenchMark(client, interval, testPeriod, all, nil)
 			wg.Done()
 		}(i)
 	}
@@ -161,12 +161,12 @@ func DoParalListContainerBenchMark(client *docker.Client, curPeriod, testPeriod 
 	return allLatencies
 }
 
-func DoParalInspectContainerBenchMark(client *docker.Client, curPeriod, testPeriod time.Duration, routineNumber int, containerIds []string) []int {
+func DoParalInspectContainerBenchMark(client *docker.Client, interval, testPeriod time.Duration, routineNumber int, containerIds []string) []int {
 	wg.Add(routineNumber)
 	latenciesTable := make([][]int, routineNumber)
 	for i := 0; i < routineNumber; i++ {
 		go func(index int) {
-			latenciesTable[index] = DoInspectContainerBenchMark(client, curPeriod, testPeriod, containerIds)
+			latenciesTable[index] = DoInspectContainerBenchMark(client, interval, testPeriod, containerIds)
 			wg.Done()
 		}(i)
 	}
@@ -212,11 +212,7 @@ func DoParalContainerStartBenchMark(client *docker.Client, qps float64, testPeri
 func DoParalContainerStopBenchMark(client *docker.Client, qps float64, routineNumber int) []int {
 	ids := GetContainerIds(client)
 	idTable := make([][]string, routineNumber)
-	var i int
-	for i = 0; i < len(ids)-(len(ids)/routineNumber*routineNumber); i++ {
-		idTable[i%routineNumber] = []string{ids[i]}
-	}
-	for ; i < len(ids); i++ {
+	for i := 0; i < len(ids); i++ {
 		idTable[i%routineNumber] = append(idTable[i%routineNumber], ids[i])
 	}
 	wg.Add(routineNumber)
@@ -243,27 +239,6 @@ func DoParalContainerStopBenchMark(client *docker.Client, qps float64, routineNu
 		allLatencies = append(allLatencies, latencies...)
 	}
 	return allLatencies
-}
-
-func DoEventStreamBenchMark(stopchan chan int, client *docker.Client) ([]int, []*docker.APIEvents) {
-	eventchan := make(chan *docker.APIEvents, 1000)
-	events := []*docker.APIEvents{}
-	defer close(eventchan)
-	if err := client.AddEventListener(eventchan); err != nil {
-		panic(fmt.Sprintf("Error add event listener: %v", err))
-	}
-	latencies := []int{}
-	for {
-		select {
-		case event := <-eventchan:
-			latency := time.Now().Unix() - event.Time
-			latencies = append(latencies, int(latency))
-			events = append(events, event)
-		case <-stopchan:
-			client.RemoveEventListener(eventchan)
-			return latencies, events
-		}
-	}
 }
 
 func GetContainerIds(client *docker.Client) (containerIds []string) {

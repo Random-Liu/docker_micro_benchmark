@@ -7,7 +7,7 @@ PLOTDIR=plot
 AWK=awk
 
 usage () {
-  echo "Usage : `basename $0` -[o|c|p|r|e|l]"
+  echo "Usage : `basename $0` -[o|c|p|r]"
   exit
 }
 
@@ -89,17 +89,6 @@ while [ "$1" != "" ]; do
       doBenchmark $1 varies_routines
       shift
       ;;
-# Enable event stream benchmark when gnuplot for event stream is added
-#    -e )
-#      echo "Benchmark event stream"
-#      doBenchmark $1 event_stream
-#      shift
-#      ;;
-#    -l )
-#      echo "Benchmark event loss rate"
-#      doBenchmark $1 event_loss_rate
-#      shift
-#      ;;
     * )
       usage
       exit 1
