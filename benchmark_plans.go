@@ -70,7 +70,7 @@ func benchmarkVariesContainerNumber(client *docker.Client) {
 	}
 }
 
-func benchmarkVariesPeriod(client *docker.Client) {
+func benchmarkVariesInterval(client *docker.Client) {
 	alive := helpers.GetContainerNum(client, false)
 	dead := helpers.GetContainerNum(client, true) - alive
 	containerIds := helpers.GetContainerIds(client)

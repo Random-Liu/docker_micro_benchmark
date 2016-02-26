@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	docker "github.com/fsouza/go-dockerclient"
 	"os"
+
+	docker "github.com/fsouza/go-dockerclient"
 )
 
 func main() {
 	usage := func() {
-		fmt.Printf("Usage: %s -[o|c|p|r]\n", os.Args[0])
+		fmt.Printf("Usage: %s -[o|c|i|r]\n", os.Args[0])
 	}
 	if len(os.Args) != 2 {
 		usage()
@@ -21,8 +22,8 @@ func main() {
 		benchmarkContainerStart(client)
 	case "-c":
 		benchmarkVariesContainerNumber(client)
-	case "-p":
-		benchmarkVariesPeriod(client)
+	case "-i":
+		benchmarkVariesInterval(client)
 	case "-r":
 		benchmarkVariesRoutineNumber(client)
 	default:

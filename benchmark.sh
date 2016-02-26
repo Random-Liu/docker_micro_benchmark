@@ -7,7 +7,7 @@ PLOTDIR=plot
 AWK=awk
 
 usage () {
-  echo "Usage : `basename $0` -[o|c|p|r]"
+  echo "Usage : `basename $0` -[o|c|i|r]"
   exit
 }
 
@@ -79,9 +79,9 @@ while [ "$1" != "" ]; do
       doBenchmark $1 varies_containers
       shift
       ;;
-    -p )
-      echo "Benchmark with different periods"
-      doBenchmark $1 varies_period 
+    -i )
+      echo "Benchmark with different intervals"
+      doBenchmark $1 varies_intervals 
       shift
       ;;
     -r )
